@@ -6,10 +6,14 @@ const { model, Schema } = require('mongoose')
 
 // Criação da estrutura da coleção OS
 const osSchema = new Schema({
-    dataOS: {
+    dataEntrada: {
         type: Date,
         default: Date.now
     },
+    idCliente: {
+        type: String,
+    },
+    
     nomeCliente: {
         type: String
     },

@@ -193,7 +193,7 @@ const template = [
                 click: () => relatorioOsAberta()
             },
             {
-                label: 'OS Finalizadas',
+                label: 'OS concluídas',
                 click: () => relatorioOsConcluida()
             }
         ]
@@ -308,6 +308,7 @@ ipcMain.on('new-os', async (event, os) => {
     console.log(os)
     try {
         const novaOS = new osModel({
+            idCliente: os.idClient_OS,
             nomeCliente: os.nomeCliente,
             foneCliente: os.foneCliente,
             cpfCliente: os.cpfCliente,
@@ -468,7 +469,7 @@ async function relatorioOsAberta() {
         let y = 60
         doc.text("Nome", 14, y)
         doc.text("Status OS", 80, y)
-        doc.text("CPF", 130, y)
+        doc.text("telefone", 130, y)
         y += 5
         // desenhar uma linha
         doc.setLineWidth(0.5) // expessura da linha
@@ -486,7 +487,9 @@ async function relatorioOsAberta() {
                 // redesenhar o cabeçalho
                 doc.text("Nome", 14, y)
                 doc.text("Status OS", 80, y)
-                doc.text("CPF", 130, y)
+                doc.text("telefone", 130, y)
+
+
                 y += 5
                 doc.setLineWidth(0.5)
                 doc.line(10, y, 200, y)
@@ -494,7 +497,7 @@ async function relatorioOsAberta() {
             }
             doc.text(c.nomeCliente, 14, y),
                 doc.text(c.statusOS, 80, y),
-                doc.text(c.cpfCliente || "N/A", 130, y)
+                doc.text(c.foneCliente || "", 130, y)
             y += 10 //quebra de linha
         })
 
@@ -526,7 +529,7 @@ async function relatorioOsAberta() {
 async function relatorioOsConcluida() {
     try {
         // Passo 1: Consultar o banco de dados e obter a listagem de clientes cadastrados por ordem alfabética
-        const clientes = await osModel.find({statusOS:'Finalizada'}).sort({ nomeCliente: 1 })
+        const clientes = await osModel.find({statusOS:'Concluída'}).sort({ nomeCliente: 1 })
         // teste de recebimento da listagem de clientes
         //console.log(clientes)
         // Passo 2:Formatação do documento pdf
@@ -541,7 +544,7 @@ async function relatorioOsConcluida() {
         // definir o tamanho da fonte (tamanho equivalente ao word)
         doc.setFontSize(18)
         // escrever um texto (título)
-        doc.text("Relatório de OS Finalizada", 14, 50)//x, y (mm)
+        doc.text("Relatório de OS Concluída", 14, 50)//x, y (mm)
         // inserir a data atual no relatório
         const dataAtual = new Date().toLocaleDateString('pt-BR')
         doc.setFontSize(12)
@@ -550,7 +553,7 @@ async function relatorioOsConcluida() {
         let y = 60
         doc.text("Nome", 14, y)
         doc.text("Status OS", 80, y)
-        doc.text("CPF", 130, y)
+        doc.text("Telefone", 130, y)
         y += 5
         // desenhar uma linha
         doc.setLineWidth(0.5) // expessura da linha
@@ -568,7 +571,7 @@ async function relatorioOsConcluida() {
                 // redesenhar o cabeçalho
                 doc.text("Nome", 14, y)
                 doc.text("Status OS", 80, y)
-                doc.text("CPF", 130, y)
+                doc.text("Telefone", 130, y)
                 y += 5
                 doc.setLineWidth(0.5)
                 doc.line(10, y, 200, y)
@@ -576,7 +579,7 @@ async function relatorioOsConcluida() {
             }
             doc.text(c.nomeCliente, 14, y),
                 doc.text(c.statusOS, 80, y),
-                doc.text(c.cpfCliente || "N/A", 130, y)
+                doc.text(c.foneCliente || "N/A", 130, y)
             y += 10 //quebra de linha
         })
 
@@ -590,7 +593,7 @@ async function relatorioOsConcluida() {
 
         // Definir o caminho do arquivo temporário e nome do arquivo
         const tempDir = app.getPath('temp')
-        const filePath = path.join(tempDir, 'OSFinalizada.pdf')
+        const filePath = path.join(tempDir, 'OSConcluída.pdf')
         // salvar temporariamente o arquivo
         doc.save(filePath)
         // abrir o arquivo no aplicativo padrão de leitura de pdf do computador do usuário
@@ -968,7 +971,7 @@ ipcMain.on('print-os', async (event) => {
 
                 // Dados da empresa
                 doc.setFontSize(12)
-                doc.text("Auto Center LuxCar", 140, 15)
+                doc.text(" LuxCar", 140, 15)
                 doc.text("CNPJ: 00.000.000/0001-00", 140, 20)
                 doc.text("Rua da Oficina, 100 - Centro", 140, 25)
                 doc.text("São Paulo - SP", 140, 30)
@@ -998,7 +1001,7 @@ ipcMain.on('print-os', async (event) => {
                 y += 8
                 doc.text(`Telefone: ${cliente?.foneCliente || ''}`, 14, y)
                 y += 8
-                doc.text(`Email: ${cliente?.emailCliente || 'N/A'}`, 14, y)
+                doc.text(`Email: ${cliente?.emailCliente || ''}`, 14, y)
                 y += 14
 
                 // Veículo / Serviço
@@ -1023,7 +1026,7 @@ ipcMain.on('print-os', async (event) => {
                 doc.setFont(undefined, 'bold')
                 doc.setFillColor(160, 160, 160)
                 doc.rect(10, y, 190, 8, 'F')
-                doc.text("Peças / Insumos", 14, y + 6)
+                doc.text("Peças ", 14, y + 6)
                 y += 14
                 doc.setFont(undefined, 'normal')
                 doc.text(dataOS.pecas || '-', 14, y)
@@ -1091,61 +1094,129 @@ ipcMain.on('print-os', async (event) => {
 
 async function printOS(osId) {
     try {
-        const dataOS = await osModel.findById(osId)
+        const dataOS = await osModel.findById(result)
+        if (!dataOS) {
+            dialog.showMessageBox({
+                type: 'warning',
+                title: "Aviso!",
+                message: "OS não encontrada",
+                buttons: ['OK']
+            })
+            return
+        }
 
-        const dataClient = await clientModel.find({
-            _id: dataOS.idCliente
-        })
-        console.log(dataClient)
-        // impressão (documento PDF) com os dados da OS, do cliente e termos do serviço (uso do jspdf)
+        const cliente = await clientModel.findById(dataOS.idCliente)
 
-        // formatação do documento pdf
         const doc = new jsPDF('p', 'mm', 'a4')
-        const imagePath = path.join(__dirname, 'src', 'public', 'img', 'logo.png')
+        const imagePath = path.join(__dirname, 'src', 'public', 'img', 'LuxCar.png')
         const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' })
-        doc.addImage(imageBase64, 'PNG', 5, 8)
-        doc.setFontSize(18)
-        doc.text("OS:", 14, 45) //x=14, y=45
+        doc.addImage(imageBase64, 'PNG', 10, 10, 40, 20)
+
+        // Dados da empresa
         doc.setFontSize(12)
+        doc.text(" LuxCar", 140, 15)
+        doc.text("CNPJ: 00.000.000/0001-00", 140, 20)
+        doc.text("Rua da Oficina, 100 - Centro", 140, 25)
+        doc.text("São Paulo - SP", 140, 30)
+        doc.text("Telefone: (11) 5555-5555", 140, 35)
 
-        // Extração dos dados do cliente vinculado a OS
-        dataClient.forEach((c) => {
-            doc.text("Cliente:", 14, 65),
-                doc.text(c.nomeCliente, 34, 65),
-                doc.text(c.foneCliente, 85, 65),
-                doc.text(c.emailCliente || "N/A", 130, 65)
-            //...
-        })
+        // Título
+        doc.setFontSize(16)
+        doc.setFont(undefined, 'bold')
+        doc.text("ORDEM DE SERVIÇO", 75, 45)
+        doc.line(10, 47, 200, 47)
 
-        // Extração dos dados da OS                        
-        doc.text(String(dataOS.computador), 14, 85)
-        doc.text(String(dataOS.problema), 80, 85)
+        let y = 55
+        doc.setFontSize(13)
+        doc.setFont(undefined, 'normal')
+        doc.text(`Nº OS: ${dataOS._id}`, 14, y)
+        doc.text(`Data: ${new Date(dataOS.dataOS).toLocaleString('pt-BR')}`, 130, y)
+        y += 12
 
-        // Texto do termo de serviço
+        // Cliente
+        doc.setFont(undefined, 'bold')
+        doc.setFillColor(160, 160, 160) // cinza escuro
+        doc.rect(10, y, 190, 8, 'F')
+        doc.text("Dados do Cliente", 14, y + 6)
+        y += 14
+        doc.setFont(undefined, 'normal')
+        doc.text(`Nome: ${cliente?.nomeCliente || ''}`, 14, y)
+        y += 8
+        doc.text(`Telefone: ${cliente?.foneCliente || ''}`, 14, y)
+        y += 8
+        doc.text(`Email: ${cliente?.emailCliente || ''}`, 14, y)
+        y += 14
+
+        // Veículo / Serviço
+        doc.setFont(undefined, 'bold')
+        doc.setFillColor(160, 160, 160)
+        doc.rect(10, y, 190, 8, 'F')
+        doc.text("Veículo / Serviço", 14, y + 6)
+        y += 14
+        doc.setFont(undefined, 'normal')
+        doc.text(`Modelo: ${dataOS.modeloCarro || ''}`, 14, y)
+        doc.text(`Marca: ${dataOS.marcaCarro || ''}`, 100, y)
+        y += 8
+        doc.text(`Placa: ${dataOS.placaCarro || ''}`, 14, y)
+        doc.text(`Funcionário: ${dataOS.funcionario || ''}`, 100, y)
+        y += 8
+        doc.text("Serviço:", 14, y)
+        y += 8
+        doc.text(dataOS.servico || '-', 20, y)
+        y += 14
+
+        // Peças / Insumos
+        doc.setFont(undefined, 'bold')
+        doc.setFillColor(160, 160, 160)
+        doc.rect(10, y, 190, 8, 'F')
+        doc.text("Peças ", 14, y + 6)
+        y += 14
+        doc.setFont(undefined, 'normal')
+        doc.text(dataOS.pecas || '-', 14, y)
+        y += 14
+
+        // Observações
+        doc.setFont(undefined, 'bold')
+        doc.setFillColor(160, 160, 160)
+        doc.rect(10, y, 190, 8, 'F')
+        doc.text("Observações", 14, y + 6)
+        y += 14
+        doc.setFont(undefined, 'normal')
+        doc.text(dataOS.observacoes || '-', 14, y)
+        y += 18
+
+        // Valor e status
+        doc.setFont(undefined, 'bold')
+        doc.text(`Valor estimado: R$ ${dataOS.orcamento || '0,00'}`, 14, y)
+        doc.text(`Status da OS: ${dataOS.statusOS || '-'}`, 130, y)
+        y += 16
+
+        // Termo
+        doc.setFontSize(9)
+        doc.setFont(undefined, 'bold')
+        doc.text("Termo de Serviço e Garantia", 14, y)
+        y += 6
+        doc.setFont(undefined, 'normal')
+        const termo = `- Diagnóstico gratuito se o serviço for aprovado.
+- Garantia de 90 dias conforme o CDC.
+- Peças substituídas podem ser devolvidas mediante solicitação.
+- Não nos responsabilizamos por dados ou itens deixados no veículo.
+- Equipamentos não retirados após 90 dias poderão ser descartados.`
+        doc.text(termo, 14, y, { maxWidth: 180, lineHeightFactor: 1.4 })
+        y += 40
+
+        // Assinaturas
+        doc.line(20, y, 80, y)
+        doc.line(120, y, 180, y)
         doc.setFontSize(10)
-        const termo = `
-Termo de Serviço e Garantia
+        doc.text("Assinatura do Cliente", 30, y + 5)
+        doc.text("Assinatura da Oficina", 135, y + 5)
 
-O cliente autoriza a realização dos serviços técnicos descritos nesta ordem, ciente de que:
-
-- Diagnóstico e orçamento são gratuitos apenas se o serviço for aprovado. Caso contrário, poderá ser cobrada taxa de análise.
-- Peças substituídas poderão ser retidas para descarte ou devolvidas mediante solicitação no ato do serviço.
-- A garantia dos serviços prestados é de 90 dias, conforme Art. 26 do Código de Defesa do Consumidor, e cobre exclusivamente o reparo executado ou peça trocada, desde que o equipamento não tenha sido violado por terceiros.
-- Não nos responsabilizamos por dados armazenados. Recomenda-se o backup prévio.
-- Equipamentos não retirados em até 90 dias após a conclusão estarão sujeitos a cobrança de armazenagem ou descarte, conforme Art. 1.275 do Código Civil.
-- O cliente declara estar ciente e de acordo com os termos acima.`
-
-        // Inserir o termo no PDF
-        doc.text(termo, 14, 150, { maxWidth: 180 }) // x=14, y=60, largura máxima para quebrar o texto automaticamente
-
-        // Definir o caminho do arquivo temporário e nome do arquivo
+        // Salvar PDF
         const tempDir = app.getPath('temp')
         const filePath = path.join(tempDir, 'os.pdf')
-        // salvar temporariamente o arquivo
         doc.save(filePath)
-        // abrir o arquivo no aplicativo padrão de leitura de pdf do computador do usuário
         shell.openPath(filePath)
-
     } catch (error) {
         console.log(error)
     }

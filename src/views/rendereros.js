@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
 let frmOS = document.getElementById('frmOS')
 
 let idOS = document.getElementById('txtOs')
-let dataOS = document.getElementById('txtData')
 let nomeCliente = document.getElementById('inputNameClient')
 let foneCliente = document.getElementById('inputPhoneClient')
 let idClient = document.getElementById('inputIdClient')
@@ -20,6 +19,7 @@ let funcionario = document.getElementById('inputTecnico')
 let pecas = document.getElementById('inputDiagnostico')
 let observacoes = document.getElementById('inputpecas')
 let orcamento = document.getElementById('inputValor')
+let dateOS = document.getElementById('inputData')
 
 
 
@@ -34,6 +34,7 @@ frmOS.addEventListener('submit', async (event) => {
         // Teste importante (recebimento dos dados do formuláro - passo 1 do fluxo)
         if (idOS.value === "") {
             const os = {
+                idClient_OS: idClient.value,
                 nomeCliente: nomeCliente.value,
                 foneCliente: foneCliente.value,
                 
@@ -56,6 +57,7 @@ frmOS.addEventListener('submit', async (event) => {
             //Criar um objeto para armazenar os dados da OS antes de enviar ao main
             const os = {
                 id_OS: idOS.value,
+                idClient_OS: idClient.value,
                 nomeCliente: nomeCliente.value,
                 foneCliente: foneCliente.value,
                 idCliente: idClient.value,
@@ -93,7 +95,7 @@ api.renderOS((event, dataOS) => {
     idOS.value = os._id
 
     // Usar o mesmo modelo
-    const data = new Date(os.dataOS)
+    const data = new Date(os.dataEntrada)
     const formatada = data.toLocaleString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
@@ -102,8 +104,8 @@ api.renderOS((event, dataOS) => {
         minute: "2-digit",
         second: "2-digit"
     })
-    dataOS.value = formatada
-
+    dateOS.value = formatada
+    idClient.value = os.idCliente
     nomeCliente.value = os.nomeCliente
     foneCliente.value = os.foneCliente
     idClient.value = os.idCliente
